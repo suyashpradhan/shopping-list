@@ -1,45 +1,26 @@
 import {Fragment, useState} from 'react'
-import {Dialog, Disclosure, Transition} from '@headlessui/react'
+import {Dialog, Disclosure, Menu, MenuButton, MenuItem, MenuItems, Transition} from '@headlessui/react'
 import {XMarkIcon} from '@heroicons/react/24/outline'
 import {ChevronDownIcon, PlusIcon} from '@heroicons/react/20/solid'
 import {useFetchProducts} from "./services/useFetchProducts";
+import {Product} from "./types/Product";
 
 const filters = [
-    {
-        id: 'color',
-        name: 'Color',
-        options: [
-            {value: 'white', label: 'White'},
-            {value: 'beige', label: 'Beige'},
-            {value: 'blue', label: 'Blue'},
-            {value: 'brown', label: 'Brown'},
-            {value: 'green', label: 'Green'},
-            {value: 'purple', label: 'Purple'},
-        ],
-    },
     {
         id: 'category',
         name: 'Category',
         options: [
-            {value: 'new-arrivals', label: 'All New Arrivals'},
-            {value: 'tees', label: 'Tees'},
-            {value: 'crewnecks', label: 'Crewnecks'},
-            {value: 'sweatshirts', label: 'Sweatshirts'},
-            {value: 'pants-shorts', label: 'Pants & Shorts'},
+            {value: 'electronics', label: 'Electronics'},
+            {value: 'jewelery', label: 'Jewelery'},
+            {value: 'men\'s clothing', label: 'Men\'s clothing'},
+            {value: 'women\'s clothing', label: 'Women\'s clothing'},
         ],
     },
-    {
-        id: 'sizes',
-        name: 'Sizes',
-        options: [
-            {value: 'xs', label: 'XS'},
-            {value: 's', label: 'S'},
-            {value: 'm', label: 'M'},
-            {value: 'l', label: 'L'},
-            {value: 'xl', label: 'XL'},
-            {value: '2xl', label: '2XL'},
-        ],
-    },
+]
+
+const sortOptions = [
+    {name: 'Price: Low to High', href: '#', value: 'asc', current: false},
+    {name: 'Price: High to Low', href: '#', value: 'desc', current: false},
 ]
 
 function classNames(...classes: any) {
@@ -48,11 +29,20 @@ function classNames(...classes: any) {
 
 function App() {
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+    const [selectedSortOptions, setSelectedSortOptions] = useState('asc')
 
     const {products, loading, error} = useFetchProducts()
 
     if (loading === 'loading') return <p>loading...</p>
     if (error) return <p>error</p>
+
+    const sortedProducts = [...products].sort((a: Product, b: Product) => {
+        if (selectedSortOptions === 'asc') {
+            return a.price - b.price
+        } else {
+            return b.price - a.price
+        }
+    })
 
     return (
         <div className="bg-white">
@@ -149,12 +139,46 @@ function App() {
                     </Dialog>
                 </Transition.Root>
 
-                <main className="mx-auto max-w-2xl py-16 px-4 sm:py-24 sm:px-6 lg:max-w-7xl lg:px-8">
-                    <div className="border-b border-gray-200 pb-10">
+                <main className="mx-auto max-w-2xl py-16 px-4 sm:py-24 sm:px-6 lg:max-w-screen-2xl lg:px-8">
+                    <div className="flex items-baseline justify-between border-b border-gray-200 pb-6 pt-24">
                         <h1 className="text-4xl font-bold tracking-tight text-gray-900">New Arrivals</h1>
-                        <p className="mt-4 text-base text-gray-500">
-                            Checkout out the latest release of Basic Tees, new and improved with four openings!
-                        </p>
+
+                        <div className="flex items-center">
+                            <Menu as="div" className="relative inline-block text-left">
+                                <div>
+                                    <MenuButton
+                                        className="group inline-flex justify-center text-sm font-medium text-gray-700 hover:text-gray-900">
+                                        {sortOptions.find((option) => option.value === selectedSortOptions)?.name || 'Sort'}
+                                        <ChevronDownIcon
+                                            aria-hidden="true"
+                                            className="-mr-1 ml-1 h-5 w-5 shrink-0 text-gray-400 group-hover:text-gray-500"
+                                        />
+                                    </MenuButton>
+                                </div>
+
+                                <MenuItems
+                                    transition
+                                    className="absolute right-0 z-10 mt-2 w-40 origin-top-right rounded-md bg-white shadow-2xl ring-1 ring-black ring-opacity-5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
+                                >
+                                    <div className="py-1">
+                                        {sortOptions.map((option) => (
+                                            <MenuItem key={option.name}>
+                                                <a
+                                                    onClick={() => setSelectedSortOptions(option.value)}
+                                                    href={option.href}
+                                                    className={classNames(
+                                                        option.current ? 'font-medium text-gray-900' : 'text-gray-500',
+                                                        'block px-4 py-2 text-sm data-[focus]:bg-gray-100 data-[focus]:outline-none',
+                                                    )}
+                                                >
+                                                    {option.name}
+                                                </a>
+                                            </MenuItem>
+                                        ))}
+                                    </div>
+                                </MenuItems>
+                            </Menu>
+                        </div>
                     </div>
 
                     <div className="pt-12 lg:grid lg:grid-cols-3 lg:gap-x-8 xl:grid-cols-4">
@@ -167,13 +191,15 @@ function App() {
                                 onClick={() => setMobileFiltersOpen(true)}
                             >
                                 <span className="text-sm font-medium text-gray-700">Filters</span>
-                                <PlusIcon className="ml-1 h-5 w-5 flex-shrink-0 text-gray-400" aria-hidden="true"/>
+                                <PlusIcon className="ml-1 h-5 w-5 flex-shrink-0 text-gray-400"
+                                          aria-hidden="true"/>
                             </button>
 
                             <div className="hidden lg:block">
                                 <form className="space-y-10 divide-y divide-gray-200">
                                     {filters.map((section, sectionIdx) => (
-                                        <div key={section.name} className={sectionIdx === 0 ? undefined : 'pt-10'}>
+                                        <div key={section.name}
+                                             className={sectionIdx === 0 ? undefined : 'pt-10'}>
                                             <fieldset>
                                                 <legend
                                                     className="block text-sm font-medium text-gray-900">{section.name}</legend>
@@ -206,14 +232,15 @@ function App() {
                             <div className="h-96 border-l-2 border-solid px-4 border-gray-200 lg:h-full">
                                 <div
                                     className="mt-8 grid grid-cols-1 gap-y-12 sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-3 xl:gap-x-8">
-                                    {products.map((product) => (
+                                    {sortedProducts.map((product) => (
                                         <div key={product.id}>
                                             <div className="relative">
-                                                <div className="relative h-72 w-full overflow-hidden rounded-lg">
+                                                <div
+                                                    className="relative h-72 w-full overflow-hidden rounded-lg">
                                                     <img
                                                         src={product.image}
                                                         alt={product.image}
-                                                        className="h-full w-full object-cover object-center"
+                                                        className="h-full w-full object-contain object-center"
                                                     />
                                                 </div>
                                                 <div className="relative mt-4">
@@ -225,7 +252,7 @@ function App() {
                                                         aria-hidden="true"
                                                         className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-black opacity-50"
                                                     />
-                                                    <p className="relative text-lg font-semibold text-white">{product.price}</p>
+                                                    <p className="relative text-lg font-semibold text-white">{product?.price}</p>
                                                 </div>
                                             </div>
                                             <div className="mt-6">

@@ -3,7 +3,7 @@ export type APIResponseStatus = 'idle' | 'loading' | 'success' | 'error'
 export interface Product {
     id: string,
     title: string,
-    price: string,
+    price: number,
     description: string,
     category: string,
     image: string,
