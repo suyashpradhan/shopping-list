@@ -1,3 +1,5 @@
+export type APIResponseStatus = 'idle' | 'loading' | 'success' | 'error'
+
 export interface Product {
     id: string,
     title: string,
